@@ -432,6 +432,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Gmail authentication route
+  app.get('/api/gmail/auth', isAuthenticated, async (req, res) => {
+    try {
+      const { gmailService } = await import('./services/gmail.js');
+      const authUrl = await gmailService.getAuthUrl();
+      res.json({ authUrl });
+    } catch (error) {
+      console.error("Error getting Gmail auth URL:", error);
+      res.status(500).json({ message: "Failed to get Gmail authorization URL" });
+    }
+  });
+
+  // Gmail OAuth callback
+  app.get('/api/gmail/callback', async (req, res) => {
+    try {
+      const { code } = req.query;
+      if (!code) {
+        return res.status(400).send('Authorization code not provided');
+      }
+
+      const { gmailService } = await import('./services/gmail.js');
+      const tokens = await gmailService.handleCallback(code as string);
+      
+      // Store tokens in session
+      if (req.session) {
+        (req.session as any).gmailTokens = tokens;
+      }
+      
+      res.redirect('/?gmail_connected=true');
+    } catch (error) {
+      console.error("Error handling Gmail callback:", error);
+      res.redirect('/?gmail_error=true');
+    }
+  });
+
+  // Real Gmail import route - replaces the simulation
+  app.post('/api/receipts/import-gmail', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.claims?.sub;
+      
+      // Check if we have Gmail tokens in session
+      const gmailTokens = (req.session as any)?.gmailTokens;
+      if (!gmailTokens) {
+        // If no tokens, initiate OAuth flow
+        const { gmailService } = await import('./services/gmail.js');
+        const authUrl = await gmailService.getAuthUrl();
+        return res.json({ 
+          requiresAuth: true, 
+          authUrl,
+          message: "Gmail authorization required. Please authorize access to your Gmail account." 
+        });
+      }
+
+      const { gmailService } = await import('./services/gmail.js');
+      
+      // Authenticate with Gmail using stored tokens
+      await gmailService.authenticateUser(gmailTokens.accessToken, gmailTokens.refreshToken);
+      
+      // Search for and process receipt emails
+      const result = await gmailService.searchReceiptEmails(userId, 20);
+      
+      // Check budget alerts after import
+      await checkBudgetAlerts(userId);
+      
+      res.json({
+        receiptsFound: result.receiptsFound,
+        receiptsProcessed: result.receiptsProcessed,
+        message: `Successfully imported ${result.receiptsProcessed} receipts from Gmail`
+      });
+      
+    } catch (error) {
+      console.error("Error importing from Gmail:", error);
+      res.status(500).json({ 
+        message: "Failed to import receipts from Gmail",
+        error: error.message 
+      });
+    }
+  });
+
+
+  // Simulated Gmail import for demonstration
+  async function simulateGmailImport(userId: string) {
+    // Simulate finding and processing receipt emails
+    const sampleReceipts = [
+      {
+        vendor: "Amazon",
+        subject: "Your order has been shipped",
+        amount: 29.99,
+        items: ["Wireless Mouse", "USB Cable"]
+      },
+      {
+        vendor: "Uber Eats", 
+        subject: "Receipt for your order",
+        amount: 18.45,
+        items: ["Burger", "Fries", "Drink"]
+      },
+      {
+        vendor: "Walmart",
+        subject: "Your Walmart receipt",
+        amount: 67.23,
+        items: ["Groceries", "Household items"]
+      }
+    ];
+
+    let processedCount = 0;
+    
+    // Create sample expenses from "email receipts"
+    for (const receiptData of sampleReceipts) {
+      try {
+        // Find appropriate category
+        const categories = await storage.getCategories();
+        let categoryId = categories.find(c => 
+          c.name === "Food & Dining" || c.name === "Shopping" || c.name === "Groceries"
+        )?.id;
+
+        // Create a receipt record first
+        const receipt = await storage.createReceipt({
+          userId,
+          originalUrl: `mailto:${receiptData.vendor.toLowerCase()}@example.com`,
+          processingStatus: "completed",
+        });
+
+        // Create expense from email data
+        await storage.createExpense({
+          userId,
+          receiptId: receipt.id,
+          categoryId,
+          description: `${receiptData.vendor} - ${receiptData.subject}`,
+          amount: receiptData.amount.toString(),
+          date: new Date().toISOString().split('T')[0],
+          vendor: receiptData.vendor,
+          isManual: 0, // Imported from email
+        });
+
+        processedCount++;
+      } catch (error) {
+        console.error(`Failed to process receipt from ${receiptData.vendor}:`, error);
+      }
+    }
+
+    // Check budget alerts after import
+    await checkBudgetAlerts(userId);
+
+    return {
+      receiptsFound: sampleReceipts.length,
+      receiptsProcessed: processedCount,
+      message: `Successfully imported ${processedCount} receipts from Gmail`
+    };
+  }
+
   // Receipts routes
   app.get('/api/receipts', isAuthenticated, async (req, res) => {
     try {

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ObjectUploader } from "./ObjectUploader.js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CloudUpload, FileImage, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CloudUpload, FileImage, Info, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { UploadResult } from "@uppy/core";
@@ -36,6 +37,47 @@ export default function ReceiptUpload({ onClose }: ReceiptUploadProps) {
     onError: (error) => {
       toast({
         title: "Upload Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const gmailImportMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/receipts/import-gmail");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.requiresAuth && data.authUrl) {
+        // Need OAuth authorization
+        toast({
+          title: "Gmail Authorization Required",
+          description: "Opening authorization window...",
+        });
+        
+        // Open Gmail authorization in new window
+        window.open(data.authUrl, 'gmail-auth', 'width=600,height=600,scrollbars=yes,resizable=yes');
+        
+        // Show message to user
+        toast({
+          title: "Authorization Required",
+          description: "Please authorize Gmail access in the popup window, then try importing again.",
+        });
+      } else {
+        toast({
+          title: "Gmail Import Started",
+          description: `Found ${data.receiptsFound || 0} receipts. Processing in background...`,
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/receipts"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/analytics/summary"] });
+        onClose?.();
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Gmail Import Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -92,23 +134,44 @@ export default function ReceiptUpload({ onClose }: ReceiptUploadProps) {
         </div>
       </CardHeader>
       <CardContent className="p-6">
-        {/* Upload Area */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <CloudUpload className="text-gray-400 h-8 w-8" />
+        {/* Upload Options */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* File Upload */}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+              <CloudUpload className="text-gray-400 h-6 w-6" />
+            </div>
+            <p className="text-gray-600 mb-2">Upload Receipt Image</p>
+            <p className="text-xs text-gray-500 mb-3">Drag & drop or browse files</p>
+            
+            <ObjectUploader
+              maxNumberOfFiles={1}
+              maxFileSize={10485760} // 10MB
+              onGetUploadParameters={handleGetUploadParameters}
+              onComplete={handleComplete}
+              buttonClassName="bg-primary text-white hover:bg-blue-700 transition-colors text-sm"
+            >
+              Choose File
+            </ObjectUploader>
           </div>
-          <p className="text-gray-600 mb-2">Drag and drop your receipt here</p>
-          <p className="text-sm text-gray-500 mb-4">or click to browse files</p>
-          
-          <ObjectUploader
-            maxNumberOfFiles={1}
-            maxFileSize={10485760} // 10MB
-            onGetUploadParameters={handleGetUploadParameters}
-            onComplete={handleComplete}
-            buttonClassName="bg-primary text-white hover:bg-blue-700 transition-colors"
-          >
-            Choose File
-          </ObjectUploader>
+
+          {/* Gmail Import */}
+          <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+              <Mail className="text-blue-600 h-6 w-6" />
+            </div>
+            <p className="text-gray-600 mb-2">Import from Gmail</p>
+            <p className="text-xs text-gray-500 mb-3">Auto-find receipt emails</p>
+            
+            <Button
+              onClick={() => gmailImportMutation.mutate()}
+              disabled={gmailImportMutation.isPending}
+              className="bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
+              data-testid="button-gmail-import"
+            >
+              {gmailImportMutation.isPending ? "Importing..." : "Import Receipts"}
+            </Button>
+          </div>
         </div>
 
         {/* Recent Uploads Preview */}
@@ -153,10 +216,12 @@ export default function ReceiptUpload({ onClose }: ReceiptUploadProps) {
         </div>
 
         {/* Upload Status */}
-        {(uploading || uploadMutation.isPending) && (
+        {(uploading || uploadMutation.isPending || gmailImportMutation.isPending) && (
           <div className="mt-4 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
-            <span className="text-sm text-gray-600">Processing receipt...</span>
+            <span className="text-sm text-gray-600">
+              {gmailImportMutation.isPending ? "Importing from Gmail..." : "Processing receipt..."}
+            </span>
           </div>
         )}
       </CardContent>

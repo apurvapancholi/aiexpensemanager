@@ -9,7 +9,6 @@ import {
   DollarSign,
   Target,
   Bot,
-  Settings,
   LogOut,
   Menu,
   X,
@@ -30,7 +29,6 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Expenses", href: "/expenses", icon: DollarSign },
     { name: "Budget Goals", href: "/budget", icon: Target },
     { name: "AI Assistant", href: "/ai", icon: Bot },
-    { name: "Settings", href: "/settings", icon: Settings },
   ];
 
   const handleLogout = () => {

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, Download, CreditCard, Target, Receipt, Utensils } from "lucide-react";
+import { Upload, Download, CreditCard, Target, Receipt, Utensils, Mail } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import ExpenseChart from "./ExpenseChart.js";
 import ReceiptUpload from "./ReceiptUpload.js";
 import BudgetGoals from "./BudgetGoals.js";
@@ -11,6 +13,8 @@ import ExpenseList from "./ExpenseList.js";
 
 export default function Dashboard() {
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch analytics summary
   const { data: summary, isLoading: summaryLoading } = useQuery({
@@ -25,6 +29,47 @@ export default function Dashboard() {
   // Fetch budget goals
   const { data: budgetGoals, isLoading: budgetLoading } = useQuery({
     queryKey: ["/api/budget-goals"],
+  });
+
+  // Gmail import mutation
+  const gmailImportMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/receipts/import-gmail");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.requiresAuth && data.authUrl) {
+        // Need OAuth authorization
+        toast({
+          title: "Gmail Authorization Required",
+          description: "Opening authorization window...",
+        });
+        
+        // Open Gmail authorization in new window
+        window.open(data.authUrl, 'gmail-auth', 'width=600,height=600,scrollbars=yes,resizable=yes');
+        
+        // Show message to user
+        toast({
+          title: "Authorization Required",
+          description: "Please authorize Gmail access in the popup window, then try importing again.",
+        });
+      } else {
+        toast({
+          title: "Gmail Import Complete",
+          description: `Successfully imported ${data.receiptsProcessed || 0} receipts from Gmail.`,
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/receipts"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/analytics/summary"] });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Gmail Import Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   // Calculate percentage change
@@ -48,7 +93,7 @@ export default function Dashboard() {
             </h2>
             <p className="text-gray-600">Overview of your financial activity</p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <Button
               onClick={() => setShowUploadModal(true)}
               className="bg-primary text-white hover:bg-blue-700"
@@ -56,6 +101,15 @@ export default function Dashboard() {
             >
               <Upload className="mr-2 h-4 w-4" />
               Upload Receipt
+            </Button>
+            <Button
+              onClick={() => gmailImportMutation.mutate()}
+              disabled={gmailImportMutation.isPending}
+              className="bg-blue-600 text-white hover:bg-blue-700"
+              data-testid="button-gmail-import-dashboard"
+            >
+              <Mail className="mr-2 h-4 w-4" />
+              {gmailImportMutation.isPending ? "Importing..." : "Import Gmail"}
             </Button>
             <Button variant="outline" data-testid="button-export-data">
               <Download className="mr-2 h-4 w-4" />

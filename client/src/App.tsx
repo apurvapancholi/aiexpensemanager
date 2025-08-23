@@ -6,6 +6,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
+import ReceiptsPage from "@/pages/ReceiptsPage.js";
+import ExpensesPage from "@/pages/ExpensesPage.js";
+import BudgetPage from "@/pages/BudgetPage.js";
+import AIAssistantPage from "@/pages/AIAssistantPage.js";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +22,10 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Home} />
+          <Route path="/receipts" component={ReceiptsPage} />
+          <Route path="/expenses" component={ExpensesPage} />
+          <Route path="/budget" component={BudgetPage} />
+          <Route path="/ai" component={AIAssistantPage} />
         </>
       )}
       <Route component={NotFound} />
