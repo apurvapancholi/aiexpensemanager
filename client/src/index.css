@@ -1,0 +1,252 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(210 25% 7.8431%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(210 25% 7.8431%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(210 25% 7.8431%);
+  --primary: hsl(207.3 90% 54.1%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(220 14.3% 95.9%);
+  --secondary-foreground: hsl(220.9 39.3% 11%);
+  --muted: hsl(220 14.3% 95.9%);
+  --muted-foreground: hsl(220 8.9% 46.1%);
+  --accent: hsl(220 14.3% 95.9%);
+  --accent-foreground: hsl(220.9 39.3% 11%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(210 20% 98%);
+  --border: hsl(220 13% 91%);
+  --input: hsl(220 13% 91%);
+  --ring: hsl(207.3 90% 54.1%);
+  --chart-1: hsl(207.3 90% 54.1%);
+  --chart-2: hsl(122.4 39.4% 49.2%);
+  --chart-3: hsl(38.8 92.1% 50.2%);
+  --chart-4: hsl(147.1 78.5% 41.9%);
+  --chart-5: hsl(341.5 75.2% 50.9%);
+  --sidebar: hsl(0 0% 100%);
+  --sidebar-foreground: hsl(210 25% 7.8431%);
+  --sidebar-primary: hsl(207.3 90% 54.1%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(220 14.3% 95.9%);
+  --sidebar-accent-foreground: hsl(220.9 39.3% 11%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(207.3 90% 54.1%);
+  --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: 'Fira Code', 'JetBrains Mono', Menlo, monospace;
+  --radius: 0.5rem;
+  --surface: hsl(0 0% 98%);
+  --warning: hsl(38.8 92.1% 50.2%);
+  --error: hsl(0 84.2% 60.2%);
+  --success: hsl(122.4 39.4% 49.2%);
+}
+
+.dark {
+  --background: hsl(220.9 39.3% 11%);
+  --foreground: hsl(210 20% 98%);
+  --card: hsl(220.9 39.3% 11%);
+  --card-foreground: hsl(210 20% 98%);
+  --popover: hsl(220.9 39.3% 11%);
+  --popover-foreground: hsl(210 20% 98%);
+  --primary: hsl(207.3 90% 54.1%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(215 27.9% 16.9%);
+  --secondary-foreground: hsl(210 20% 98%);
+  --muted: hsl(215 27.9% 16.9%);
+  --muted-foreground: hsl(217.9 10.6% 64.9%);
+  --accent: hsl(215 27.9% 16.9%);
+  --accent-foreground: hsl(210 20% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(210 20% 98%);
+  --border: hsl(215 27.9% 16.9%);
+  --input: hsl(215 27.9% 16.9%);
+  --ring: hsl(207.3 90% 54.1%);
+  --chart-1: hsl(207.3 90% 54.1%);
+  --chart-2: hsl(122.4 39.4% 49.2%);
+  --chart-3: hsl(38.8 92.1% 50.2%);
+  --chart-4: hsl(147.1 78.5% 41.9%);
+  --chart-5: hsl(341.5 75.2% 50.9%);
+  --sidebar: hsl(220.9 39.3% 11%);
+  --sidebar-foreground: hsl(210 20% 98%);
+  --sidebar-primary: hsl(207.3 90% 54.1%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(215 27.9% 16.9%);
+  --sidebar-accent-foreground: hsl(210 20% 98%);
+  --sidebar-border: hsl(215 27.9% 16.9%);
+  --sidebar-ring: hsl(207.3 90% 54.1%);
+  --surface: hsl(220.9 39.3% 11%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-surface text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans;
+  }
+}
+
+/* Custom styles for ExpenseTracker Pro */
+.expense-card {
+  @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+}
+
+.budget-progress-bar {
+  @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.budget-progress-fill {
+  @apply h-2 rounded-full transition-all duration-300;
+}
+
+.budget-status-good {
+  @apply bg-green-500;
+}
+
+.budget-status-warning {
+  @apply bg-yellow-500;
+}
+
+.budget-status-danger {
+  @apply bg-red-500;
+}
+
+.chart-container {
+  @apply w-full h-64;
+}
+
+/* Uppy modal customizations */
+.uppy-Dashboard-inner {
+  @apply rounded-lg;
+}
+
+.uppy-Dashboard-AddFiles-title {
+  @apply text-gray-700;
+}
+
+/* AI Chat styles */
+.ai-message {
+  @apply bg-white rounded-lg p-3 max-w-xs text-gray-700;
+}
+
+.user-message {
+  @apply bg-primary text-white rounded-lg p-3 max-w-xs ml-auto;
+}
+
+.chat-container {
+  @apply h-64 overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50;
+}
+
+/* Custom scrollbar for chat */
+.chat-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Animation for loading states */
+.loading-dots {
+  @apply flex space-x-1;
+}
+
+.loading-dot {
+  @apply w-2 h-2 bg-gray-400 rounded-full animate-bounce;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.loading-dot:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+/* Expense category icons styling */
+.category-icon {
+  @apply w-10 h-10 rounded-lg flex items-center justify-center;
+}
+
+.category-food {
+  @apply bg-blue-100 text-blue-600;
+}
+
+.category-transport {
+  @apply bg-green-100 text-green-600;
+}
+
+.category-shopping {
+  @apply bg-purple-100 text-purple-600;
+}
+
+.category-entertainment {
+  @apply bg-yellow-100 text-yellow-600;
+}
+
+.category-utilities {
+  @apply bg-orange-100 text-orange-600;
+}
+
+.category-other {
+  @apply bg-gray-100 text-gray-600;
+}
+
+/* Status badge styles */
+.status-badge {
+  @apply text-xs px-2 py-1 rounded-full font-medium;
+}
+
+.status-good {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-danger {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Hover effects */
+.hover-lift {
+  @apply transition-transform duration-200 hover:scale-105;
+}
+
+.hover-shadow {
+  @apply transition-shadow duration-200 hover:shadow-lg;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .mobile-padding {
+    @apply px-4;
+  }
+  
+  .mobile-text {
+    @apply text-sm;
+  }
+}
+
+/* Focus styles for accessibility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+}
